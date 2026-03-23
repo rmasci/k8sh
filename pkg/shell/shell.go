@@ -738,6 +738,39 @@ func (s *Shell) getPodIP(ctx context.Context) string {
 	return "No IP address assigned to pod"
 }
 
+// Getter methods for POSIX integration
+func (s *Shell) GetCurrentDir() string {
+	return s.currentDir
+}
+
+func (s *Shell) GetCurrentPod() string {
+	return s.currentPod
+}
+
+func (s *Shell) GetCurrentContainer() string {
+	return s.currentContainer
+}
+
+func (s *Shell) GetCurrentNamespace() string {
+	return s.currentNamespace
+}
+
+func (s *Shell) SetCurrentDir(dir string) {
+	s.currentDir = dir
+}
+
+func (s *Shell) SetCurrentPod(pod string) {
+	s.currentPod = pod
+}
+
+func (s *Shell) SetCurrentContainer(container string) {
+	s.currentContainer = container
+}
+
+func (s *Shell) SetCurrentNamespace(namespace string) {
+	s.currentNamespace = namespace
+}
+
 // Bubble Tea Model
 func (m ShellModel) Init() tea.Cmd {
 	return nil

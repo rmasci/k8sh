@@ -1,8 +1,10 @@
 package posix
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/rmasci/k8sh/pkg/k8s"
@@ -244,44 +246,189 @@ func (ps *POSIXShell) SetWorkingDir(dir string) {
 
 // GetCurrentDir returns the current directory from k8sh
 func (ps *POSIXShell) GetCurrentDir() string {
-	// This would need to be implemented in the k8sh shell
-	return "/"
+	return ps.Shell.GetCurrentDir()
 }
 
 // SetCurrentDir sets the current directory in k8sh
 func (ps *POSIXShell) SetCurrentDir(dir string) {
-	// This would need to be implemented in the k8sh shell
+	ps.Shell.SetCurrentDir(dir)
 }
 
 // GetCurrentPod returns the current pod from k8sh
 func (ps *POSIXShell) GetCurrentPod() string {
-	// This would need to be implemented in the k8sh shell
-	return ""
+	return ps.Shell.GetCurrentPod()
 }
 
 // SetCurrentPod sets the current pod in k8sh
 func (ps *POSIXShell) SetCurrentPod(pod string) {
-	// This would need to be implemented in the k8sh shell
+	ps.Shell.SetCurrentPod(pod)
 }
 
 // GetCurrentContainer returns the current container from k8sh
 func (ps *POSIXShell) GetCurrentContainer() string {
-	// This would need to be implemented in the k8sh shell
-	return ""
+	return ps.Shell.GetCurrentContainer()
 }
 
 // SetCurrentContainer sets the current container in k8sh
 func (ps *POSIXShell) SetCurrentContainer(container string) {
-	// This would need to be implemented in the k8sh shell
+	ps.Shell.SetCurrentContainer(container)
 }
 
 // GetCurrentNamespace returns the current namespace from k8sh
 func (ps *POSIXShell) GetCurrentNamespace() string {
-	// This would need to be implemented in the k8sh shell
-	return "default"
+	return ps.Shell.GetCurrentNamespace()
 }
 
 // SetCurrentNamespace sets the current namespace in k8sh
 func (ps *POSIXShell) SetCurrentNamespace(namespace string) {
-	// This would need to be implemented in the k8sh shell
+	ps.Shell.SetCurrentNamespace(namespace)
+}
+
+// StartPOSIXShell starts the POSIX interactive shell
+func StartPOSIXShell(k8sClient *k8s.Client) error {
+	posixShell := NewPOSIXShell(k8sClient)
+	return posixShell.Run()
+}
+
+// Run starts the POSIX shell interactive loop
+func (ps *POSIXShell) Run() error {
+	ctx := context.Background()
+	reader := bufio.NewReader(os.Stdin)
+	
+	fmt.Println("🐚 k8sh POSIX Shell")
+	fmt.Println("Type 'exit' to quit, 'help' for commands")
+	fmt.Println()
+	
+	for {
+		// Display prompt with current context
+		prompt := ps.buildPrompt()
+		fmt.Print(prompt)
+		
+		// Read user input
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("reading input: %w", err)
+		}
+		
+		// Remove trailing newline and trim spaces
+		line = strings.TrimSpace(strings.TrimSuffix(line, "\n"))
+		if line == "" {
+			continue
+		}
+		
+		// Handle POSIX commands
+		result, shouldExit, err := ps.executeCommand(ctx, line)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			continue
+		}
+		
+		if shouldExit {
+			fmt.Println("Goodbye! 👋")
+			break
+		}
+		
+		// Display output (if any)
+		if result != "" {
+			fmt.Print(result)
+		}
+	}
+	
+	return nil
+}
+
+// buildPrompt creates the shell prompt
+func (ps *POSIXShell) buildPrompt() string {
+	var parts []string
+	
+	// Add namespace if set
+	if ns := ps.GetCurrentNamespace(); ns != "" && ns != "default" {
+		parts = append(parts, fmt.Sprintf("[%s]", ns))
+	}
+	
+	// Add pod/container if selected
+	if pod := ps.GetCurrentPod(); pod != "" {
+		container := ps.GetCurrentContainer()
+		if container != "" {
+			parts = append(parts, fmt.Sprintf("%s:%s", pod, container))
+		} else {
+			parts = append(parts, pod)
+		}
+	}
+	
+	// Add current directory
+	parts = append(parts, ps.GetCurrentDir())
+	
+	// Build prompt string
+	promptStr := strings.Join(parts, ":")
+	return fmt.Sprintf("posix:%s$ ", promptStr)
+}
+
+// executeCommand executes a command using POSIX parser or falls back to k8sh
+func (ps *POSIXShell) executeCommand(ctx context.Context, line string) (string, bool, error) {
+	// Handle built-in exit commands
+	if line == "exit" || line == "quit" {
+		return "", true, nil
+	}
+	
+	// Handle help command
+	if line == "help" {
+		return ps.showHelp(), false, nil
+	}
+	
+	// Try POSIX parsing first
+	parser := NewParser(line)
+	ast, err := parser.Parse()
+	if err != nil {
+		// Fall back to k8sh native commands if POSIX parsing fails
+		result := ps.Shell.ExecuteCommand(ctx, line)
+		if result == "exit" {
+			return "", true, nil
+		}
+		return result, false, nil
+	}
+	
+	// Execute POSIX command
+	result, err := ps.executor.Execute(ctx, ast)
+	if err != nil {
+		return "", false, err
+	}
+	
+	// Sync POSIX environment state back to k8sh shell
+	ps.syncState()
+	
+	return result, false, nil
+}
+
+// showHelp displays help information
+func (ps *POSIXShell) showHelp() string {
+	help := `🐚 k8sh POSIX Shell Commands
+
+POSIX Builtins:
+  echo, printf, export, unset, readonly, set, cd, pwd
+  alias, unalias, type, command, true, false, exit, quit
+
+POSIX Features:
+  • Command pipelines: cmd1 | cmd2 | cmd3
+  • I/O redirection: >, >>, <, 2>, &>
+  • Variable expansion: $VAR, ${VAR}
+  • Command substitution: $(cmd)
+  • Quoted strings: "double" and 'single'
+  • Background jobs: cmd &
+
+K8sh Commands (fallback):
+  help, exit, quit, pods, use, namespace
+  ls, cat, cd, pwd, mkdir, rm, cp, mv, touch
+  head, tail, grep, wc, sort, ps, env, df, du
+  vi, vim, clear
+
+Examples:
+  echo "Hello World" | grep Hello
+  export MY_VAR=value && echo $MY_VAR
+  find . -name "*.go" | head -5
+  ls -la > files.txt
+
+Type 'exit' or 'quit' to leave the shell.
+`
+	return help
 }

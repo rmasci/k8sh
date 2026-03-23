@@ -478,7 +478,6 @@ func TestAllStringIndices(t *testing.T) {
 	
 	t.Run("SingleMatch", func(t *testing.T) {
 		indices := allStringIndices("hello world", "hello")
-		expected := []int{0}
 		
 		if len(indices) != 1 || indices[0] != 0 {
 			t.Errorf("Expected [0], got %v", indices)

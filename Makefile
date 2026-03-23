@@ -1,6 +1,6 @@
 # Makefile for k8sh
 
-.PHONY: test test-verbose test-race test-cover clean build lint fmt vet
+.PHONY: test test-verbose test-race test-cover clean build lint fmt vet test-posix demo-posix
 
 # Default target
 all: test build
@@ -48,6 +48,10 @@ test-integration:
 # Run POSIX compliance tests
 test-posix-compliance:
 	go test ./pkg/posix/ -v -tags=posix
+
+# Run POSIX demo
+demo-posix:
+	go run examples/posix/demo.go
 
 # Run benchmarks
 bench:

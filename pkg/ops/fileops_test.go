@@ -5,14 +5,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rmasci/k8sh/pkg/testing"
+	k8stesting "github.com/rmasci/k8sh/pkg/testing"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
 func TestNewFileOperations(t *testing.T) {
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	
 	fo := NewFileOperations(clientset, config)
 	
@@ -31,12 +31,12 @@ func TestListDirectory(t *testing.T) {
 	t.Run("SuccessfulListing", func(t *testing.T) {
 		// This test would require mocking the SPDYExecutor
 		// For now, we'll test the fallback mechanism
-		clientset := testing.NewFakeKubernetesClient()
-		config := testing.GetTestConfig()
+		clientset := k8stesting.NewFakeKubernetesClient()
+		config := k8stesting.GetTestConfig()
 		fo := NewFileOperations(clientset, config)
 		
 		// This will fail and call the fallback method
-		result, err := fo.ListDirectory(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestDirPath)
+		result, err := fo.ListDirectory(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestDirPath)
 		
 		// Should return fallback result
 		if err != nil {
@@ -57,12 +57,12 @@ func TestReadFile(t *testing.T) {
 	ctx := context.Background()
 	
 	t.Run("SuccessfulRead", func(t *testing.T) {
-		clientset := testing.NewFakeKubernetesClient()
-		config := testing.GetTestConfig()
+		clientset := k8stesting.NewFakeKubernetesClient()
+		config := k8stesting.GetTestConfig()
 		fo := NewFileOperations(clientset, config)
 		
 		// This will fail and call the fallback method
-		result, err := fo.ReadFile(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestFilePath)
+		result, err := fo.ReadFile(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestFilePath)
 		
 		// Should return fallback result
 		if err != nil {
@@ -80,12 +80,12 @@ func TestWriteFile(t *testing.T) {
 	testContent := "test content"
 	
 	t.Run("SuccessfulWrite", func(t *testing.T) {
-		clientset := testing.NewFakeKubernetesClient()
-		config := testing.GetTestConfig()
+		clientset := k8stesting.NewFakeKubernetesClient()
+		config := k8stesting.GetTestConfig()
 		fo := NewFileOperations(clientset, config)
 		
 		// This will fail and call the fallback method
-		err := fo.WriteFile(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestFilePath, testContent)
+		err := fo.WriteFile(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestFilePath, testContent)
 		
 		// Should return fallback error
 		if err == nil {
@@ -100,12 +100,12 @@ func TestWriteFile(t *testing.T) {
 
 func TestFallbackMethods(t *testing.T) {
 	ctx := context.Background()
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	fo := NewFileOperations(clientset, config)
 	
 	t.Run("listDirectoryViaEphemeral", func(t *testing.T) {
-		result, err := fo.listDirectoryViaEphemeral(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestDirPath)
+		result, err := fo.listDirectoryViaEphemeral(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestDirPath)
 		
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
@@ -122,7 +122,7 @@ func TestFallbackMethods(t *testing.T) {
 	})
 	
 	t.Run("readFileViaEphemeral", func(t *testing.T) {
-		result, err := fo.readFileViaEphemeral(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestFilePath)
+		result, err := fo.readFileViaEphemeral(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestFilePath)
 		
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
@@ -135,7 +135,7 @@ func TestFallbackMethods(t *testing.T) {
 	})
 	
 	t.Run("writeFileViaEphemeral", func(t *testing.T) {
-		err := fo.writeFileViaEphemeral(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestFilePath, "test content")
+		err := fo.writeFileViaEphemeral(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestFilePath, "test content")
 		
 		if err == nil {
 			t.Error("Expected error")

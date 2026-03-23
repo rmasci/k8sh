@@ -4,17 +4,17 @@ import (
 	"context"
 	"testing"
 
-	"github.com/rmasci/k8sh/pkg/testing"
+	k8stesting "github.com/rmasci/k8sh/pkg/testing"
 )
 
 func TestMakeDirectory(t *testing.T) {
 	ctx := context.Background()
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	fo := NewFileOperations(clientset, config)
 	
 	t.Run("ValidPath", func(t *testing.T) {
-		err := fo.MakeDirectory(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestDirPath)
+		err := fo.MakeDirectory(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestDirPath)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err == nil {
@@ -25,12 +25,12 @@ func TestMakeDirectory(t *testing.T) {
 
 func TestRemoveFile(t *testing.T) {
 	ctx := context.Background()
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	fo := NewFileOperations(clientset, config)
 	
 	t.Run("RemoveFile", func(t *testing.T) {
-		err := fo.RemoveFile(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestFilePath, false)
+		err := fo.RemoveFile(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestFilePath, false)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err == nil {
@@ -39,7 +39,7 @@ func TestRemoveFile(t *testing.T) {
 	})
 	
 	t.Run("RemoveDirectory", func(t *testing.T) {
-		err := fo.RemoveFile(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestDirPath, true)
+		err := fo.RemoveFile(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestDirPath, true)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err == nil {
@@ -50,15 +50,15 @@ func TestRemoveFile(t *testing.T) {
 
 func TestCopyFile(t *testing.T) {
 	ctx := context.Background()
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	fo := NewFileOperations(clientset, config)
 	
 	srcPath := "/test/src.txt"
 	dstPath := "/test/dst.txt"
 	
 	t.Run("ValidCopy", func(t *testing.T) {
-		err := fo.CopyFile(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, srcPath, dstPath)
+		err := fo.CopyFile(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, srcPath, dstPath)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err == nil {
@@ -69,15 +69,15 @@ func TestCopyFile(t *testing.T) {
 
 func TestMoveFile(t *testing.T) {
 	ctx := context.Background()
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	fo := NewFileOperations(clientset, config)
 	
 	srcPath := "/test/src.txt"
 	dstPath := "/test/dst.txt"
 	
 	t.Run("ValidMove", func(t *testing.T) {
-		err := fo.MoveFile(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, srcPath, dstPath)
+		err := fo.MoveFile(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, srcPath, dstPath)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err == nil {
@@ -88,12 +88,12 @@ func TestMoveFile(t *testing.T) {
 
 func TestTouchFile(t *testing.T) {
 	ctx := context.Background()
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	fo := NewFileOperations(clientset, config)
 	
 	t.Run("ValidTouch", func(t *testing.T) {
-		err := fo.TouchFile(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestFilePath)
+		err := fo.TouchFile(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestFilePath)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err == nil {
@@ -104,12 +104,12 @@ func TestTouchFile(t *testing.T) {
 
 func TestHeadFile(t *testing.T) {
 	ctx := context.Background()
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	fo := NewFileOperations(clientset, config)
 	
 	t.Run("DefaultLines", func(t *testing.T) {
-		result, err := fo.HeadFile(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestFilePath, 0)
+		result, err := fo.HeadFile(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestFilePath, 0)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err != nil {
@@ -122,7 +122,7 @@ func TestHeadFile(t *testing.T) {
 	})
 	
 	t.Run("SpecificLines", func(t *testing.T) {
-		result, err := fo.HeadFile(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestFilePath, 5)
+		result, err := fo.HeadFile(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestFilePath, 5)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err != nil {
@@ -137,12 +137,12 @@ func TestHeadFile(t *testing.T) {
 
 func TestTailFile(t *testing.T) {
 	ctx := context.Background()
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	fo := NewFileOperations(clientset, config)
 	
 	t.Run("DefaultLines", func(t *testing.T) {
-		result, err := fo.TailFile(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestFilePath, 0)
+		result, err := fo.TailFile(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestFilePath, 0)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err != nil {
@@ -155,7 +155,7 @@ func TestTailFile(t *testing.T) {
 	})
 	
 	t.Run("SpecificLines", func(t *testing.T) {
-		result, err := fo.TailFile(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestFilePath, 5)
+		result, err := fo.TailFile(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestFilePath, 5)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err != nil {
@@ -170,14 +170,14 @@ func TestTailFile(t *testing.T) {
 
 func TestGrepFile(t *testing.T) {
 	ctx := context.Background()
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	fo := NewFileOperations(clientset, config)
 	
 	pattern := "test"
 	
 	t.Run("CaseSensitive", func(t *testing.T) {
-		result, err := fo.GrepFile(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, pattern, testing.TestFilePath, false)
+		result, err := fo.GrepFile(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, pattern, k8stesting.TestFilePath, false)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err != nil {
@@ -190,7 +190,7 @@ func TestGrepFile(t *testing.T) {
 	})
 	
 	t.Run("CaseInsensitive", func(t *testing.T) {
-		result, err := fo.GrepFile(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, pattern, testing.TestFilePath, true)
+		result, err := fo.GrepFile(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, pattern, k8stesting.TestFilePath, true)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err != nil {
@@ -205,12 +205,12 @@ func TestGrepFile(t *testing.T) {
 
 func TestWordCount(t *testing.T) {
 	ctx := context.Background()
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	fo := NewFileOperations(clientset, config)
 	
 	t.Run("ValidFile", func(t *testing.T) {
-		result, err := fo.WordCount(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestFilePath)
+		result, err := fo.WordCount(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestFilePath)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err != nil {
@@ -225,12 +225,12 @@ func TestWordCount(t *testing.T) {
 
 func TestSortFile(t *testing.T) {
 	ctx := context.Background()
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	fo := NewFileOperations(clientset, config)
 	
 	t.Run("NormalSort", func(t *testing.T) {
-		result, err := fo.SortFile(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestFilePath, false)
+		result, err := fo.SortFile(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestFilePath, false)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err != nil {
@@ -243,7 +243,7 @@ func TestSortFile(t *testing.T) {
 	})
 	
 	t.Run("UniqueSort", func(t *testing.T) {
-		result, err := fo.SortFile(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestFilePath, true)
+		result, err := fo.SortFile(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestFilePath, true)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err != nil {
@@ -258,12 +258,12 @@ func TestSortFile(t *testing.T) {
 
 func TestListProcesses(t *testing.T) {
 	ctx := context.Background()
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	fo := NewFileOperations(clientset, config)
 	
 	t.Run("ValidProcessList", func(t *testing.T) {
-		result, err := fo.ListProcesses(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer)
+		result, err := fo.ListProcesses(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err != nil {
@@ -278,12 +278,12 @@ func TestListProcesses(t *testing.T) {
 
 func TestGetEnvironment(t *testing.T) {
 	ctx := context.Background()
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	fo := NewFileOperations(clientset, config)
 	
 	t.Run("ValidEnvironment", func(t *testing.T) {
-		result, err := fo.GetEnvironment(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer)
+		result, err := fo.GetEnvironment(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err != nil {
@@ -298,12 +298,12 @@ func TestGetEnvironment(t *testing.T) {
 
 func TestGetDiskUsage(t *testing.T) {
 	ctx := context.Background()
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	fo := NewFileOperations(clientset, config)
 	
 	t.Run("ValidPath", func(t *testing.T) {
-		result, err := fo.GetDiskUsage(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestDirPath)
+		result, err := fo.GetDiskUsage(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestDirPath)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err != nil {
@@ -318,12 +318,12 @@ func TestGetDiskUsage(t *testing.T) {
 
 func TestGetDirectoryUsage(t *testing.T) {
 	ctx := context.Background()
-	clientset := testing.NewFakeKubernetesClient()
-	config := testing.GetTestConfig()
+	clientset := k8stesting.NewFakeKubernetesClient()
+	config := k8stesting.GetTestConfig()
 	fo := NewFileOperations(clientset, config)
 	
 	t.Run("ValidDirectory", func(t *testing.T) {
-		result, err := fo.GetDirectoryUsage(ctx, testing.TestNamespace, testing.TestPod, testing.TestContainer, testing.TestDirPath)
+		result, err := fo.GetDirectoryUsage(ctx, k8stesting.TestNamespace, k8stesting.TestPod, k8stesting.TestContainer, k8stesting.TestDirPath)
 		
 		// This will fail due to mocked clientset, but tests the structure
 		if err != nil {
