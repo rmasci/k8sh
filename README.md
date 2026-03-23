@@ -1,6 +1,8 @@
 # k8sh - Kubernetes Pseudo-Shell
 
 An OS-independent pseudo-shell for Kubernetes pods that works without requiring any tools in target containers. Supports distroless, scratch, alpine, debian, and ubuntu-based images.
+## purpose
+With all the different container images available, it can be a challenge to debug and fix issues in a containerized environment. k8sh provides a consistent and universal interface for debugging and troubleshooting Kubernetes pods.  WIth k8sh you'll always have the right tools available without installing them into the pod. 
 
 ## Features
 
@@ -58,6 +60,7 @@ Currently implemented:
 - `clear` - Clear screen
 
 ## Vi Editor Features
+Basic VI editing. VI has been a unix standard, other editors like nano might be there, but you can always count on vi on every unix / linux system from macos, hpux, solaris, bsd.
 
 The built-in vi editor supports:
 - **Navigation**: h,j,k,l + arrow keys
