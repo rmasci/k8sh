@@ -1,9 +1,27 @@
 # Makefile for k8sh
 
-.PHONY: test test-verbose test-race test-cover clean build build-all lint fmt vet test-posix demo-posix demo-help
+.PHONY: test test-verbose test-race test-cover clean build lint fmt vet test-posix demo-posix demo-help
 
-# Default target
-all: test build
+# Default target (all platforms)
+all:
+	@echo "🏗 Building k8sh for all platforms..."
+	@echo "=================================="
+	@mkdir -p releases
+	@echo "Building for macOS (amd64)..."
+	GOOS=darwin GOARCH=amd64 go build -o releases/k8sh-darwin-amd64 ./cmd/k8sh
+	@echo "Building for macOS (arm64)..."
+	GOOS=darwin GOARCH=arm64 go build -o releases/k8sh-darwin-arm64 ./cmd/k8sh
+	@echo "Building for Linux (amd64)..."
+	GOOS=linux GOARCH=amd64 go build -o releases/k8sh-linux-amd64 ./cmd/k8sh
+	@echo "Building for Linux (arm64)..."
+	GOOS=linux GOARCH=arm64 go build -o releases/k8sh-linux-arm64 ./cmd/k8sh
+	@echo "Building for Windows (amd64)..."
+	GOOS=windows GOARCH=amd64 go build -o releases/k8sh-windows-amd64.exe ./cmd/k8sh
+	@echo ""
+	@echo "✅ Build complete! Files in releases/:"
+	@ls -la releases/
+	@echo ""
+	@echo "📦 Distribution ready!"
 
 # Run all tests
 test:
@@ -101,27 +119,6 @@ build:
 	go build -o releases/k8sh ./cmd/k8sh
 	@echo "✅ Built: releases/k8sh"
 
-# Build for multiple platforms
-build-all:
-	@echo "🏗 Building k8sh for all platforms..."
-	@echo "=================================="
-	@mkdir -p releases
-	@echo "Building for macOS (amd64)..."
-	GOOS=darwin GOARCH=amd64 go build -o releases/k8sh-darwin-amd64 ./cmd/k8sh
-	@echo "Building for macOS (arm64)..."
-	GOOS=darwin GOARCH=arm64 go build -o releases/k8sh-darwin-arm64 ./cmd/k8sh
-	@echo "Building for Linux (amd64)..."
-	GOOS=linux GOARCH=amd64 go build -o releases/k8sh-linux-amd64 ./cmd/k8sh
-	@echo "Building for Linux (arm64)..."
-	GOOS=linux GOARCH=arm64 go build -o releases/k8sh-linux-arm64 ./cmd/k8sh
-	@echo "Building for Windows (amd64)..."
-	GOOS=windows GOARCH=amd64 go build -o releases/k8sh-windows-amd64.exe ./cmd/k8sh
-	@echo ""
-	@echo "✅ Build complete! Files in releases/:"
-	@ls -la releases/
-	@echo ""
-	@echo "📦 Distribution ready!"
-
 # Clean build artifacts
 clean:
 	@echo "🧹 Cleaning build artifacts..."
@@ -205,8 +202,8 @@ help:
 	@echo "  test-posix-compliance - Run POSIX compliance tests"
 	@echo "  test-integration - Run integration tests"
 	@echo "  bench         - Run benchmarks"
-	@echo "  build         - Build for current platform (./bin/)"
-	@echo "  build-all     - Build for all platforms (./releases/)"
+	@echo "  all           - Build for all platforms (./releases/)"
+	@echo "  build         - Build for current platform (./releases/)"
 	@echo "  clean         - Clean build artifacts"
 	@echo "  fmt           - Format code"
 	@echo "  vet           - Run go vet"
