@@ -1,6 +1,6 @@
 # Makefile for k8sh
 
-.PHONY: test test-verbose test-race test-cover clean build lint fmt vet test-posix demo-posix
+.PHONY: test test-verbose test-race test-cover clean build build-all lint fmt vet test-posix demo-posix demo-help
 
 # Default target
 all: test build
@@ -53,24 +53,82 @@ test-posix-compliance:
 demo-posix:
 	go run examples/posix/demo.go
 
+# Show help demo
+demo-help:
+	@echo "🐚 k8sh - Improved Help Demo"
+	@echo "=================================="
+	@echo ""
+	@echo "First-time user experience - much more friendly!"
+	@echo ""
+	@echo "Here's what users now see when they type 'help':"
+	@echo ""
+	@echo "🚀 QUICK START:"
+	@echo "  1. List available pods:     k8sh> pods"
+	@echo "  2. Select a pod:           k8sh> use my-pod"
+	@echo "  3. Start working:           k8sh> ls -la"
+	@echo "  4. Get help anytime:        k8sh> help"
+	@echo ""
+	@echo "📁 FILE OPERATIONS:"
+	@echo "  mkdir <path>           Create directory"
+	@echo "    Example: mkdir /app/data"
+	@echo "  rm [-r] <path>         Remove file/directory"
+	@echo "    Example: rm -r /tmp/old-data"
+	@echo "  cp <src> <dst>         Copy file within pod"
+	@echo "    Example: cp config.yaml config.yaml.bak"
+	@echo "  download <src> <dst>    🆕 Download file from pod to local"
+	@echo "    Example: download /app/logs/app.log ./logs-backup.log"
+	@echo ""
+	@echo "💡 PRO TIPS:"
+	@echo "  • Use 'download' to copy files from pod to your local machine"
+	@echo "  • All file paths work with both absolute (/path) and relative (path) formats"
+	@echo "  • Tab completion works for pod and container names"
+	@echo ""
+	@echo "🐚 POSIX MODE:"
+	@echo "  For full POSIX compliance: k8sh posix"
+	@echo "  • Command pipelines: cmd1 | cmd2 | cmd3"
+	@echo "  • I/O redirection: >, >>, <, 2>"
+	@echo "  • Variable expansion: \$$VAR, \$$\{VAR\}"
+	@echo ""
+	@echo "Happy container hacking! 🎉"
+
 # Run benchmarks
 bench:
 	go test -bench=. ./...
 
-# Build the application
+# Build the application (current platform)
 build:
-	go build -o bin/k8sh ./cmd/k8sh
+	@mkdir -p releases
+	go build -o releases/k8sh ./cmd/k8sh
+	@echo "✅ Built: releases/k8sh"
 
 # Build for multiple platforms
 build-all:
-	GOOS=linux GOARCH=amd64 go build -o bin/k8sh-linux-amd64 ./cmd/k8sh
-	GOOS=darwin GOARCH=amd64 go build -o bin/k8sh-darwin-amd64 ./cmd/k8sh
-	GOOS=windows GOARCH=amd64 go build -o bin/k8sh-windows-amd64.exe ./cmd/k8sh
+	@echo "🏗 Building k8sh for all platforms..."
+	@echo "=================================="
+	@mkdir -p releases
+	@echo "Building for macOS (amd64)..."
+	GOOS=darwin GOARCH=amd64 go build -o releases/k8sh-darwin-amd64 ./cmd/k8sh
+	@echo "Building for macOS (arm64)..."
+	GOOS=darwin GOARCH=arm64 go build -o releases/k8sh-darwin-arm64 ./cmd/k8sh
+	@echo "Building for Linux (amd64)..."
+	GOOS=linux GOARCH=amd64 go build -o releases/k8sh-linux-amd64 ./cmd/k8sh
+	@echo "Building for Linux (arm64)..."
+	GOOS=linux GOARCH=arm64 go build -o releases/k8sh-linux-arm64 ./cmd/k8sh
+	@echo "Building for Windows (amd64)..."
+	GOOS=windows GOARCH=amd64 go build -o releases/k8sh-windows-amd64.exe ./cmd/k8sh
+	@echo ""
+	@echo "✅ Build complete! Files in releases/:"
+	@ls -la releases/
+	@echo ""
+	@echo "📦 Distribution ready!"
 
 # Clean build artifacts
 clean:
-	rm -rf bin/
-	rm -f coverage.out coverage.html
+	@echo "🧹 Cleaning build artifacts..."
+	@rm -rf bin/
+	@rm -rf releases/
+	@rm -f coverage.out coverage.html
+	@echo "✅ Clean complete!"
 
 # Format code
 fmt:
@@ -147,8 +205,8 @@ help:
 	@echo "  test-posix-compliance - Run POSIX compliance tests"
 	@echo "  test-integration - Run integration tests"
 	@echo "  bench         - Run benchmarks"
-	@echo "  build         - Build the application"
-	@echo "  build-all     - Build for multiple platforms"
+	@echo "  build         - Build for current platform (./bin/)"
+	@echo "  build-all     - Build for all platforms (./releases/)"
 	@echo "  clean         - Clean build artifacts"
 	@echo "  fmt           - Format code"
 	@echo "  vet           - Run go vet"

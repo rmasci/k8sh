@@ -1,0 +1,36 @@
+# Binaries for all platforms
+releases/
+releases/k8sh*
+releases/k8sh-*
+releases/k8sh.*
+releases/*.exe
+
+# Old bin directory
+bin/
+bin/k8sh*
+bin/k8sh.*
+bin/*.exe
+
+# Build artifacts
+coverage.out
+coverage.html
+*.test
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Go files
+vendor/
+*.mod.sum
+
+# Temporary files
+*.tmp
+*.bak
+*~

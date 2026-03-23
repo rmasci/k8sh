@@ -3,6 +3,7 @@ package shell
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/rmasci/k8sh/pkg/k8s"
 	"github.com/rmasci/k8sh/pkg/ops"
 	"github.com/rmasci/k8sh/pkg/editor"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
@@ -79,6 +81,8 @@ func (s *Shell) ExecuteCommand(ctx context.Context, cmd string) string {
 		return s.removeFile(ctx, args...)
 	case "cp":
 		return s.copyFile(ctx, args...)
+	case "download":
+		return s.downloadFile(ctx, args...)
 	case "mv":
 		return s.moveFile(ctx, args...)
 	case "touch":
@@ -117,49 +121,174 @@ func (s *Shell) ExecuteCommand(ctx context.Context, cmd string) string {
 }
 
 func (s *Shell) showHelp() string {
-	return `Available commands:
-  help                    - Show this help message
-  exit                    - Exit the shell
-  pwd                     - Print current directory
-  ls [path]              - List directory contents
-  cd <path>              - Change directory
-  cat <file>             - Display file contents
-  vi/vim <file>          - Edit file with vi editor
+	return `🐚 k8sh - Kubernetes Pseudo-Shell
+=====================================
+
+k8sh provides a shell interface for Kubernetes pods without requiring
+any tools to be installed in the target containers. Perfect for 
+distroless, scratch, and minimal container environments!
+
+🚀 QUICK START:
+  1. List available pods:     k8sh> pods
+  2. Select a pod:           k8sh> use my-pod
+  3. Start working:           k8sh> ls -la
+  4. Get help anytime:        k8sh> help
+
+⚙️  CONFIGURATION:
+  k8sh uses standard Kubernetes configuration at:
+    ~/.kube/config
   
-  File Operations:
-  mkdir <path>           - Create directory
-  rm [-r] <path>         - Remove file/directory
-  cp <src> <dst>         - Copy file
-  mv <src> <dst>         - Move/rename file
-  touch <file>           - Create empty file
+  First-time setup options:
+  • Local cluster: minikube start, kind create cluster
+  • Cloud provider: gcloud init, aws eks update-kubeconfig
+  • Manual setup: kubectl config commands
   
-  Text Processing:
-  head [-n] <file>       - Show first lines
-  tail [-n] <file>       - Show last lines
-  grep [-i] <pattern> <file> - Search in file
-  wc <file>              - Word count
-  sort [-u] <file>       - Sort lines
+  Current config check: k8sh> pods (shows config status)
+
+📁 FILE OPERATIONS:
+  mkdir <path>           Create directory
+    Example: mkdir /app/data
   
-  System Info:
-  ps                      - List processes
-  env                     - Environment variables
-  df [path]              - Disk usage
-  du [path]              - Directory usage
-  ip                      - Show pod IP address
+  rm [-r] <path>         Remove file/directory
+    Example: rm -r /tmp/old-data
+    Example: rm /tmp/single-file.txt
   
-  Kubernetes:
-  pods                   - List available pods
-  use <pod> [container]  - Select pod and container
-  namespace <name>       - Set current namespace
+  cp <src> <dst>         Copy file within pod
+    Example: cp config.yaml config.yaml.bak
   
-  Other:
-  clear                  - Clear screen`
+  download <src> <dst>    🆕 Download file from pod to local
+    Example: download /app/logs/app.log ./logs-backup.log
+    Example: download /app/config/ ./config-backup/ -r
+  
+  mv <src> <dst>         Move/rename file
+    Example: mv old-name.txt new-name.txt
+  
+  touch <file>           Create empty file
+    Example: touch /tmp/new-file.txt
+
+📖 TEXT EDITING:
+  cat <file>             Display file contents
+    Example: cat /app/config.yaml
+  
+  vi/vim <file>          Edit file with vi editor
+    Example: vi /app/config.yaml
+    Navigation: h,j,k,l, w,b, 0,$, gg/G
+    Editing: i/a/o/O, x/dd/dw
+    Search: /pattern, n/N for next/prev
+    Save/Quit: :w, :q, :wq
+
+📊 TEXT PROCESSING:
+  head [-n] <file>       Show first lines
+    Example: head -20 /app/logs/app.log
+  
+  tail [-n] <file>       Show last lines  
+    Example: tail -50 /app/logs/app.log
+  
+  grep [-i] <pattern> <file> Search in files
+    Example: grep -i "error" /app/logs/*.log
+  
+  wc <file>              Word/line/character count
+    Example: wc /app/logs/app.log
+  
+  sort [-u] <file>       Sort lines (unique with -u)
+    Example: sort -u /app/users.txt
+
+🔍 SYSTEM INFORMATION:
+  ps                      List running processes
+    Example: ps aux
+  
+  env                     Show environment variables
+    Example: env | grep APP_
+  
+  df [path]              Disk usage by filesystem
+    Example: df /app
+  
+  du [path]              Directory usage
+    Example: du -sh /app/logs
+  
+  ip                      Show pod IP address
+    Example: ip
+
+☸️  KUBERNETES COMMANDS:
+  pods                   List all available pods
+    Example: pods
+    Example: pods --namespace=production
+  
+  use <pod> [container]  Select pod and container
+    Example: use my-app
+    Example: use my-app container-name
+  
+  namespace <name>       Set/change namespace
+    Example: namespace production
+    Example: namespace
+
+🔄 OTHER:
+  clear                  Clear terminal screen
+  help                  Show this help message
+  exit/quit             Exit the shell
+
+💡 PRO TIPS:
+  • Use 'download' to copy files from pod to your local machine
+  • All file paths work with both absolute (/path) and relative (path) formats
+  • Tab completion works for pod and container names
+  • Use 'pods' command to see all available containers
+  • The vi editor supports full vi keybindings and commands
+
+🐚 POSIX MODE:
+  For full POSIX compliance (pipelines, redirection, variables):
+    k8sh posix
+  
+  POSIX features include:
+  • Command pipelines: cmd1 | cmd2 | cmd3
+  • I/O redirection: >, >>, <, 2>
+  • Variable expansion: VAR, ${VAR}
+  • Command substitution: $(cmd)
+  • Built-in commands: echo, printf, export, cd, pwd, etc.
+
+📚 FOR MORE HELP:
+  • GitHub: https://github.com/rmasci/k8sh
+  • Issues: https://github.com/rmasci/k8sh/issues
+  • POSIX Guide: See docs/posix_compliance.md
+
+Happy container hacking! 🎉
+`
 }
 
 func (s *Shell) listPods(ctx context.Context) string {
 	if s.currentPod == "" {
 		pods, err := s.client.ListPods(ctx, s.currentNamespace)
 		if err != nil {
+			// Check if this is a config error
+			if strings.Contains(err.Error(), "kube/config") || strings.Contains(err.Error(), "no such file") {
+				return errorStyle.Render(fmt.Sprintf(`🔍 KUBERNETES CONFIG NOT FOUND
+
+k8sh looks for Kubernetes configuration at:
+  %s
+
+🚀 FIRST-TIME SETUP:
+==================
+
+1. 📁 LOCAL CLUSTER (minikube, kind, etc.):
+   minikube start
+   kind create cluster
+
+2. ☁️  CLOUD PROVIDER:
+   gcloud init
+   aws eks update-kubeconfig  
+   az account set
+
+3. 🔧 MANUAL CONFIG:
+   mkdir -p %s
+   # Edit the config file with your cluster details
+
+4. 📋 IN-CLUSTER CONFIG:
+   kubectl config set-cluster my-cluster --server=https://...
+   kubectl config set-credentials my-user --token=...
+   kubectl config set-context my-context --cluster=my-cluster --user=my-user
+   kubectl config use-context my-context
+
+After setup, run k8sh again! 🎉`, clientcmd.RecommendedHomeFile, filepath.Dir(clientcmd.RecommendedHomeFile)))
+			}
 			return errorStyle.Render(fmt.Sprintf("Error listing pods: %v", err))
 		}
 
@@ -408,6 +537,46 @@ func (s *Shell) copyFile(ctx context.Context, args ...string) string {
 	}
 
 	return fmt.Sprintf("Copied: %s -> %s", src, dst)
+}
+
+func (s *Shell) downloadFile(ctx context.Context, args ...string) string {
+	if s.currentPod == "" {
+		return errorStyle.Render("No pod selected. Use 'use <pod>' to select a pod first")
+	}
+
+	if len(args) < 2 {
+		return "Usage: download <src> <dst> [-r|--recursive]"
+	}
+
+	// Parse arguments
+	var recursive bool
+	var srcPath, dstPath string
+	remainingArgs := []string{}
+	
+	for i, arg := range args {
+		if arg == "-r" || arg == "--recursive" {
+			recursive = true
+		} else if i == 0 {
+			srcPath = arg
+		} else if i == 1 {
+			dstPath = arg
+		} else {
+			remainingArgs = append(remainingArgs, arg)
+		}
+	}
+
+	// Handle relative paths
+	if !strings.HasPrefix(srcPath, "/") {
+		srcPath = s.currentDir + "/" + srcPath
+	}
+
+	// Use k8s client to download file directly
+	err := s.client.DownloadFile(s.currentNamespace, s.currentPod, s.currentContainer, srcPath, dstPath, recursive)
+	if err != nil {
+		return errorStyle.Render(fmt.Sprintf("Error downloading file: %v", err))
+	}
+
+	return fmt.Sprintf("Downloaded: %s -> %s", srcPath, dstPath)
 }
 
 func (s *Shell) moveFile(ctx context.Context, args ...string) string {
