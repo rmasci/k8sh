@@ -29,7 +29,10 @@ type Shell struct {
 	currentContainer string
 	currentNamespace string
 	history       []string
+	historyIndex  int
 	input         string
+	suggestions   []string
+	suggestionIndex int
 }
 
 type ShellModel struct {
@@ -47,8 +50,78 @@ func NewShell(client *k8s.Client) *Shell {
 		currentContainer: "",
 		currentNamespace: "default",
 		history:       []string{},
+		historyIndex:  -1,
 		input:         "",
+		suggestions:   []string{},
+		suggestionIndex: -1,
 	}
+}
+
+func (s *Shell) addToHistory(cmd string) {
+	// Don't add empty commands or duplicates
+	if cmd == "" {
+		return
+	}
+	
+	// Remove from history if it already exists (to avoid duplicates)
+	for i, h := range s.history {
+		if h == cmd {
+			s.history = append(s.history[:i], s.history[i+1:]...)
+			break
+		}
+	}
+	
+	// Add to history
+	s.history = append(s.history, cmd)
+	
+	// Limit history size
+	if len(s.history) > 100 {
+		s.history = s.history[1:]
+	}
+	
+	// Reset history index
+	s.historyIndex = -1
+}
+
+func (s *Shell) getCompletions(input string) []string {
+	var completions []string
+	
+	// Get command suggestions
+	commands := []string{
+		"help", "exit", "quit", "pwd", "ls", "cd", "cat", "vi", "vim",
+		"mkdir", "rm", "cp", "download", "mv", "touch", "head", "tail",
+		"grep", "wc", "sort", "ps", "env", "df", "du", "ip", "pods",
+		"use", "namespace", "clear",
+	}
+	
+	// If input is empty, show all commands
+	if input == "" {
+		return commands
+	}
+	
+	// Complete commands
+	for _, cmd := range commands {
+		if strings.HasPrefix(cmd, input) {
+			completions = append(completions, cmd)
+		}
+	}
+	
+	// Complete pod names if using "use" command
+	if strings.HasPrefix(input, "use ") {
+		podPart := strings.TrimPrefix(input, "use ")
+		// Get pod completions
+		ctx := context.Background()
+		pods, err := s.client.ListPods(ctx, s.currentNamespace)
+		if err == nil {
+			for _, pod := range pods {
+				if strings.HasPrefix(pod.Name, podPart) {
+					completions = append(completions, "use "+pod.Name)
+				}
+			}
+		}
+	}
+	
+	return completions
 }
 
 func (s *Shell) ExecuteCommand(ctx context.Context, cmd string) string {
@@ -133,6 +206,13 @@ distroless, scratch, and minimal container environments!
   2. Select a pod:           k8sh> use my-pod
   3. Start working:           k8sh> ls -la
   4. Get help anytime:        k8sh> help
+
+⌨️  SHELL FEATURES:
+  • Tab Completion: Press Tab to complete commands and pod names
+  • History Navigation: Use ↑/↓ arrows to browse command history
+  • Smart Suggestions: Context-aware command suggestions
+  • Duplicate Prevention: Intelligent history management
+  • Visual Feedback: Highlighted suggestions and current selection
 
 ⚙️  CONFIGURATION:
   k8sh uses standard Kubernetes configuration at:
@@ -952,6 +1032,9 @@ func (m ShellModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyEnter:
 			cmd := strings.TrimSpace(m.shell.input)
 			if cmd != "" {
+				// Add to history
+				m.shell.addToHistory(cmd)
+				
 				ctx := context.Background()
 				result := m.shell.ExecuteCommand(ctx, cmd)
 				if result == "exit" {
@@ -966,14 +1049,64 @@ func (m ShellModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 				m.shell.input = ""
+				m.shell.suggestions = []string{}
+				m.shell.suggestionIndex = -1
+			}
+		case tea.KeyTab:
+			// Tab completion
+			if len(m.shell.suggestions) == 0 {
+				// Generate suggestions
+				m.shell.suggestions = m.shell.getCompletions(m.shell.input)
+				m.shell.suggestionIndex = 0
+			} else {
+				// Cycle through suggestions
+				m.shell.suggestionIndex++
+				if m.shell.suggestionIndex >= len(m.shell.suggestions) {
+					m.shell.suggestionIndex = 0
+				}
+			}
+			// Apply suggestion
+			if len(m.shell.suggestions) > 0 {
+				m.shell.input = m.shell.suggestions[m.shell.suggestionIndex]
+			}
+		case tea.KeyUp:
+			// Navigate history up
+			if len(m.shell.history) > 0 {
+				if m.shell.historyIndex == -1 {
+					m.shell.historyIndex = len(m.shell.history) - 1
+				} else if m.shell.historyIndex > 0 {
+					m.shell.historyIndex--
+				}
+				m.shell.input = m.shell.history[m.shell.historyIndex]
+				m.shell.suggestions = []string{}
+				m.shell.suggestionIndex = -1
+			}
+		case tea.KeyDown:
+			// Navigate history down
+			if m.shell.historyIndex != -1 {
+				m.shell.historyIndex++
+				if m.shell.historyIndex >= len(m.shell.history) {
+					m.shell.historyIndex = -1
+					m.shell.input = ""
+				} else {
+					m.shell.input = m.shell.history[m.shell.historyIndex]
+				}
+				m.shell.suggestions = []string{}
+				m.shell.suggestionIndex = -1
 			}
 		case tea.KeyBackspace:
 			if len(m.shell.input) > 0 {
 				m.shell.input = m.shell.input[:len(m.shell.input)-1]
+				// Clear suggestions when input changes
+				m.shell.suggestions = []string{}
+				m.shell.suggestionIndex = -1
 			}
 		default:
 			if msg.Type == tea.KeyRunes {
 				m.shell.input += string(msg.Runes)
+				// Clear suggestions when input changes
+				m.shell.suggestions = []string{}
+				m.shell.suggestionIndex = -1
 			}
 		}
 	}
@@ -988,6 +1121,19 @@ func (m ShellModel) View() string {
 		output.WriteString(line + "\n")
 	}
 	
+	// Show suggestions if available
+	if len(m.shell.suggestions) > 0 {
+		output.WriteString("\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("8")).Render("Suggestions:"))
+		for i, suggestion := range m.shell.suggestions {
+			if i == m.shell.suggestionIndex {
+				output.WriteString("\n  → " + lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Bold(true).Render(suggestion))
+			} else {
+				output.WriteString("\n    " + suggestion)
+			}
+		}
+		output.WriteString("\n")
+	}
+	
 	// Show prompt with context
 	prompt := statusStyle.Render("k8sh")
 	if m.shell.currentPod != "" {
@@ -998,6 +1144,13 @@ func (m ShellModel) View() string {
 	prompt += " "
 	prompt += promptStyle.Render(m.shell.currentDir) + " "
 	prompt += m.shell.input
+	
+	// Show cursor indicator
+	if len(m.shell.suggestions) > 0 {
+		prompt += " (Tab for more)"
+	}
+	
+	output.WriteString(prompt)
 	
 	return output.String()
 }

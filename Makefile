@@ -1,6 +1,6 @@
 # Makefile for k8sh
 
-.PHONY: test test-verbose test-race test-cover clean build lint fmt vet test-posix demo-posix demo-help
+.PHONY: test test-verbose test-race test-cover clean build lint fmt vet test-posix demo-shell demo-help
 
 # Default target (all platforms)
 all:
@@ -8,9 +8,9 @@ all:
 	@echo "=================================="
 	@mkdir -p releases
 	@echo "Building for macOS (amd64)..."
-	GOOS=darwin GOARCH=amd64 go build -o releases/k8sh-darwin-amd64 ./cmd/k8sh
+	GOOS=darwin GOARCH=amd64 go build -o releases/k8sh-mac-amd64 ./cmd/k8sh
 	@echo "Building for macOS (arm64)..."
-	GOOS=darwin GOARCH=arm64 go build -o releases/k8sh-darwin-arm64 ./cmd/k8sh
+	GOOS=darwin GOARCH=arm64 go build -o releases/k8sh-mac-arm64 ./cmd/k8sh
 	@echo "Building for Linux (amd64)..."
 	GOOS=linux GOARCH=amd64 go build -o releases/k8sh-linux-amd64 ./cmd/k8sh
 	@echo "Building for Linux (arm64)..."
@@ -67,9 +67,47 @@ test-integration:
 test-posix-compliance:
 	go test ./pkg/posix/ -v -tags=posix
 
-# Run POSIX demo
-demo-posix:
-	go run examples/posix/demo.go
+# Run shell demo
+demo-shell:
+	@echo "🐚 k8sh - POSIX Shell Demo"
+	@echo "=================================="
+	@echo ""
+	@echo "k8sh now provides a POSIX-compliant shell by default!"
+	@echo ""
+	@echo "🚀 QUICK START:"
+	@echo "  k8sh                    # Start POSIX shell"
+	@echo "  k8sh --help             # Show this help"
+	@echo "  k8sh version            # Show version info"
+	@echo ""
+	@echo "🐚 POSIX FEATURES:"
+	@echo "  • Command pipelines: cmd1 | cmd2 | cmd3"
+	@echo "  • I/O redirection: >, >>, <, 2>, &>"
+	@echo "  • Variable expansion: \$$VAR, \$$\{VAR\}"
+	@echo "  • Command substitution: \$$(cmd)"
+	@echo "  • Built-in commands: echo, printf, export, cd, pwd, help"
+	@echo "  • Tab completion and history navigation"
+	@echo ""
+	@echo "📁 KUBERNETES FEATURES:"
+	@echo "  • File operations: ls, cd, cat, vi, mkdir, rm, cp, mv, touch"
+	@echo "  • Text processing: head, tail, grep, wc, sort"
+	@echo "  • System info: ps, env, df, du, ip"
+	@echo "  • Pod management: pods, use, namespace"
+	@echo "  • File download: download <src> <dst>"
+	@echo ""
+	@echo "🎯 EXAMPLES (inside k8sh):"
+	@echo "  echo \"Hello POSIX!\"           # Basic command"
+	@echo "  export MY_VAR=value           # Set variable"
+	@echo "  echo \$$MY_VAR                  # Variable expansion"
+	@echo "  cat file.txt | grep \"error\"   # Pipeline"
+	@echo "  ls -la > files.txt            # Redirection"
+	@echo "  use my-pod                    # Select pod"
+	@echo "  download /app/logs/app.log ./backup.log  # Download file"
+	@echo ""
+	@echo "📚 POSIX COMPLIANCE:"
+	@echo "  Full POSIX shell compliance with AST-based parsing,"
+	@echo "  environment management, pipelines, and redirection."
+	@echo ""
+	@echo "Happy POSIX shell hacking! 🎉"
 
 # Show help demo
 demo-help:
@@ -219,4 +257,6 @@ help:
 	@echo "  install-tools - Install development tools"
 	@echo "  setup         - Development setup"
 	@echo "  ci            - CI pipeline"
+	@echo "  demo-shell    - Show POSIX shell demo"
+	@echo "  demo-help     - Show help demo"
 	@echo "  help          - Show this help"
